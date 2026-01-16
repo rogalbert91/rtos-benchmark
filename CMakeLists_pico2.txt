@@ -1,0 +1,16 @@
+# Standalone CMakeLists.txt for building rtos-benchmark on RP2350
+#
+# Usage:
+#   mkdir build_pico2 && cd build_pico2
+#   cmake -C ../CMakeLists_pico2.txt ..
+#   # or simply:
+#   cmake -DPICO_BUILD=1 ..
+#   make -j4
+#   make flash
+
+# This file can be used as an initial cache file:
+#   cmake -C CMakeLists_pico2.txt ..
+
+set(RTOS "freertos" CACHE STRING "RTOS to use")
+set(BOARD "pico2_sdk" CACHE STRING "Board to use")
+set(PICO_BUILD ON CACHE BOOL "Building for Pico")

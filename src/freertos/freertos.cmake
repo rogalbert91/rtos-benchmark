@@ -27,6 +27,7 @@ set(CMAKE_TOOLCHAIN_FILE ${MCUX_SDK_PATH}/tools/cmake_toolchain_files/armgcc.cma
 enable_language(ASM)
 
 include_directories(src/freertos)
+include_directories(src/freertos/boards/frdm_k64f)
 include_directories(${MCUX_SDK_PATH}/CMSIS/Core/Include)
 include_directories(${MCUX_SDK_PATH}/components/serial_manager)
 include_directories(${MCUX_SDK_PATH}/components/uart)
@@ -61,7 +62,7 @@ target_sources(app PRIVATE ${MCUX_SDK_PATH}/rtos/freertos/freertos_kernel/timers
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --specs=nano.specs")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --specs=nosys.specs")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -T${CMAKE_CURRENT_SOURCE_DIR}/src/freertos/MK64FN1M0xxx12_flash.ld")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -T${CMAKE_CURRENT_SOURCE_DIR}/src/freertos/boards/frdm_k64f/MK64FN1M0xxx12_flash.ld")
 
 target_link_libraries(app PRIVATE -Wl,--start-group)
 target_link_libraries(app PRIVATE c)

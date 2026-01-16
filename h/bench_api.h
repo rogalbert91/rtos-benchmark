@@ -3,6 +3,9 @@
 #ifndef  BENCH_API_H
 #define  BENCH_API_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #define BENCH_SUCCESS 0 /* Value returned when operation succeeds */
 #define BENCH_ERROR 1 /* Value returned when operation fails */
 

@@ -10,12 +10,20 @@ typedef void * bench_work;
 
 #define TICK_SYNCH()  k_sleep(K_TICKS(1))
 
+/* Board-specific debug console */
+#if defined(PICO_RP2350)
+#include <stdio.h>
+#define PRINTF printf
+#else
 #include "fsl_debug_console.h"
+#endif
 
 #define BENCH_LAST_PRIORITY (configMAX_PRIORITIES - 1)
 #define BENCH_IDLE_TIME     5
 
+#ifndef __weak
 #define __weak __attribute__((__weak__))
+#endif
 
 #define ARG_UNUSED(x) (void)(x)
 
@@ -29,5 +37,6 @@ typedef void * bench_work;
 #define RTOS_HAS_THREAD_CREATE_START  0
 #define RTOS_HAS_SUSPEND_RESUME       1
 #define RTOS_HAS_MAIN_ENTRY_POINT     1
+#define RTOS_HAS_MESSAGE_QUEUE        1
 
 #endif /* PORTING_LAYER_FREERTOS_H_ */

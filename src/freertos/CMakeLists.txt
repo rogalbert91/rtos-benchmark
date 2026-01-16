@@ -1,6 +1,6 @@
-add_subdirectory(arch)
-add_subdirectory(timer)
-
-target_sources(app PRIVATE board.c)
-target_sources(app PRIVATE clock_config.c)
-target_sources(app PRIVATE pin_mux.c)
+# Skip subdirectory processing for Pico SDK builds (handled in freertos_pico2_sdk.cmake)
+if(NOT PICO_SDK_BUILD)
+    add_subdirectory(arch)
+    add_subdirectory(timer)
+    add_subdirectory(boards)
+endif()

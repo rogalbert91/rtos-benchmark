@@ -8,12 +8,19 @@
 #include "timers.h"
 #include "semphr.h"
 
-/* Freescale includes. */
+/* Board-specific includes. */
+#if defined(PICO_RP2350)
+/* RP2350 - minimal includes */
+#include <stdio.h>
+#include <stdint.h>
+#else
+/* Freescale/NXP includes. */
 #include "fsl_device_registers.h"
 #include "fsl_debug_console.h"
 #include "fsl_common.h"
-#include "board.h"
+#endif
 
+#include "board.h"
 #include "pin_mux.h"
 #include "clock_config.h"
 #include "arch_api.h"
@@ -360,8 +367,8 @@ static StackType_t xTimerStack[STACK_SIZE];
  * about how to initialize the timer task.
  */
 void vApplicationGetTimerTaskMemory(StaticTask_t **ppxTimerTaskTCBBuffer,
-				    StackType_t **ppxTimerTaskStackBuffer,
-				    uint32_t *pulTimerTaskStackSize)
+			    StackType_t **ppxTimerTaskStackBuffer,
+			    uint32_t *pulTimerTaskStackSize)
 {
 	*ppxTimerTaskTCBBuffer = &xTimerTaskTCBBuffer;
 	*ppxTimerTaskStackBuffer = xTimerStack;

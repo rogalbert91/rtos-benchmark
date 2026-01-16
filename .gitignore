@@ -17,3 +17,4 @@ Makefile
 CMakeCache.txt
 cmake_install.cmake
 output.map
+build_pico2/
