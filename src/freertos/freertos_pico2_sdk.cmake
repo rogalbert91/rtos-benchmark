@@ -3,10 +3,23 @@
 # This configuration uses the Pico SDK for proper RP2350 initialization
 # and the FreeRTOS RP2040 port adapted for RP2350.
 #
-# Build:
+# Build (standard benchmarks):
 #   mkdir build && cd build
 #   cmake -DRTOS=freertos -DBOARD=pico2_sdk ..
 #   make -j4
+#
+# Build (Thread-Metric benchmarks):
+#   mkdir build && cd build
+#   cmake -DRTOS=freertos -DBOARD=pico2_sdk -DENABLE_THREAD_METRIC=ON ..
+#   make -j4
+#
+# Build (specific Thread-Metric test):
+#   cmake -DRTOS=freertos -DBOARD=pico2_sdk -DENABLE_THREAD_METRIC=ON \
+#         -DTM_TEST=COOPERATIVE_SCHEDULING ..
+#
+# Available TM_TEST values:
+#   BASIC_PROCESSING, COOPERATIVE_SCHEDULING, PREEMPTIVE_SCHEDULING,
+#   MESSAGE_PROCESSING, SYNCHRONIZATION, MEMORY_ALLOCATION
 #
 # Flash:
 #   make flash
@@ -90,25 +103,66 @@ add_executable(app)
 # Board sources
 set(BOARD_DIR ${CMAKE_SOURCE_DIR}/src/freertos/boards/pico2_sdk)
 
-# Main benchmark application sources
-set(BENCH_SOURCES
-    ${CMAKE_SOURCE_DIR}/src/freertos/bench_porting_layer_freertos.c
-    ${CMAKE_SOURCE_DIR}/src/common/bench_all.c
-    ${CMAKE_SOURCE_DIR}/src/common/bench_thread_test.c
-    ${CMAKE_SOURCE_DIR}/src/common/bench_interrupt_latency_test.c
-    ${CMAKE_SOURCE_DIR}/src/common/bench_malloc_free_test.c
-    ${CMAKE_SOURCE_DIR}/src/common/bench_message_queue_test.c
-    ${CMAKE_SOURCE_DIR}/src/common/bench_mutex_lock_unlock_test.c
-    ${CMAKE_SOURCE_DIR}/src/common/bench_sem_context_switch_test.c
-    ${CMAKE_SOURCE_DIR}/src/common/bench_sem_signal_release_test.c
-    ${CMAKE_SOURCE_DIR}/src/common/bench_thread_switch_yield_test.c
-    ${CMAKE_SOURCE_DIR}/src/common/bench_utils.c
-    ${BOARD_DIR}/board_pico2.c
-    ${BOARD_DIR}/clock_config.c
-    ${BOARD_DIR}/pin_mux.c
-    ${BOARD_DIR}/arch_pico2.c
-    ${BOARD_DIR}/timer_pico2.c
-)
+# Thread-Metric benchmark option
+option(ENABLE_THREAD_METRIC "Enable Thread-Metric benchmark tests instead of standard benchmarks" OFF)
+
+# Thread-Metric test duration (default 30 seconds per Thread-Metric spec)
+set(TM_TEST_DURATION "30" CACHE STRING "Thread-Metric test duration in seconds")
+
+# Thread-Metric specific test selection (optional)
+set(TM_TEST "" CACHE STRING "Run specific Thread-Metric test (BASIC_PROCESSING, COOPERATIVE_SCHEDULING, etc.)")
+
+if(ENABLE_THREAD_METRIC)
+    message(STATUS "Thread-Metric benchmarks ENABLED")
+    message(STATUS "TM_TEST_DURATION: ${TM_TEST_DURATION} seconds")
+    if(TM_TEST)
+        message(STATUS "TM_TEST: ${TM_TEST}")
+    endif()
+
+    # Thread-Metric sources
+    set(THREAD_METRIC_DIR ${CMAKE_SOURCE_DIR}/src/common/thread_metric)
+    set(BENCH_SOURCES
+        ${CMAKE_SOURCE_DIR}/src/freertos/bench_porting_layer_freertos.c
+        ${CMAKE_SOURCE_DIR}/src/common/bench_utils.c
+        ${THREAD_METRIC_DIR}/tm_adapter.c
+        ${THREAD_METRIC_DIR}/tm_all.c
+        ${THREAD_METRIC_DIR}/tm_basic_processing_test.c
+        ${THREAD_METRIC_DIR}/tm_cooperative_scheduling_test.c
+        ${THREAD_METRIC_DIR}/tm_preemptive_scheduling_test.c
+        ${THREAD_METRIC_DIR}/tm_interrupt_processing_test.c
+        ${THREAD_METRIC_DIR}/tm_interrupt_preemption_processing_test.c
+        ${THREAD_METRIC_DIR}/tm_message_processing_test.c
+        ${THREAD_METRIC_DIR}/tm_synchronization_processing_test.c
+        ${THREAD_METRIC_DIR}/tm_memory_allocation_test.c
+        ${BOARD_DIR}/board_pico2.c
+        ${BOARD_DIR}/clock_config.c
+        ${BOARD_DIR}/pin_mux.c
+        ${BOARD_DIR}/arch_pico2.c
+        ${BOARD_DIR}/timer_pico2.c
+    )
+else()
+    message(STATUS "Standard rtos-benchmark2 tests ENABLED")
+
+    # Standard benchmark sources
+    set(BENCH_SOURCES
+        ${CMAKE_SOURCE_DIR}/src/freertos/bench_porting_layer_freertos.c
+        ${CMAKE_SOURCE_DIR}/src/common/bench_all.c
+        ${CMAKE_SOURCE_DIR}/src/common/bench_thread_test.c
+        ${CMAKE_SOURCE_DIR}/src/common/bench_interrupt_latency_test.c
+        ${CMAKE_SOURCE_DIR}/src/common/bench_malloc_free_test.c
+        ${CMAKE_SOURCE_DIR}/src/common/bench_message_queue_test.c
+        ${CMAKE_SOURCE_DIR}/src/common/bench_mutex_lock_unlock_test.c
+        ${CMAKE_SOURCE_DIR}/src/common/bench_sem_context_switch_test.c
+        ${CMAKE_SOURCE_DIR}/src/common/bench_sem_signal_release_test.c
+        ${CMAKE_SOURCE_DIR}/src/common/bench_thread_switch_yield_test.c
+        ${CMAKE_SOURCE_DIR}/src/common/bench_utils.c
+        ${BOARD_DIR}/board_pico2.c
+        ${BOARD_DIR}/clock_config.c
+        ${BOARD_DIR}/pin_mux.c
+        ${BOARD_DIR}/arch_pico2.c
+        ${BOARD_DIR}/timer_pico2.c
+    )
+endif()
 
 target_sources(app PRIVATE ${BENCH_SOURCES})
 
@@ -116,11 +170,25 @@ target_include_directories(app PRIVATE
     ${BOARD_DIR}
     ${CMAKE_SOURCE_DIR}/h
     ${CMAKE_SOURCE_DIR}/src/freertos
+    ${CMAKE_SOURCE_DIR}/src/common/thread_metric
 )
 
 # Timing configuration: 0 = time_us_64() (default), 1 = DWT cycle counter
-option(USE_DWT_TIMING "Use DWT cycle counter for timing (experimental)" OFF)
+# For Thread-Metric builds, DWT is enabled by default for cycle-accurate timing
+if(ENABLE_THREAD_METRIC AND NOT DEFINED USE_DWT_TIMING)
+    option(USE_DWT_TIMING "Use DWT cycle counter for timing" ON)
+    message(STATUS "DWT timing ENABLED (default for Thread-Metric)")
+else()
+    option(USE_DWT_TIMING "Use DWT cycle counter for timing (experimental)" OFF)
+endif()
 
+if(USE_DWT_TIMING)
+    message(STATUS "Timing: DWT cycle counter (~6.67ns resolution)")
+else()
+    message(STATUS "Timing: time_us_64() (~1us resolution)")
+endif()
+
+# Common compile definitions
 target_compile_definitions(app PRIVATE
     PICO_RP2350=1
     FREERTOS=1
@@ -131,6 +199,35 @@ target_compile_definitions(app PRIVATE
     CALIBRATION_LOOPS=1000
     USE_DWT_TIMING=$<BOOL:${USE_DWT_TIMING}>
 )
+
+# Thread-Metric specific definitions
+if(ENABLE_THREAD_METRIC)
+    target_compile_definitions(app PRIVATE
+        RUN_THREAD_METRIC=1
+        TM_TEST_DURATION=${TM_TEST_DURATION}
+    )
+
+    # Handle specific test selection
+    if(TM_TEST STREQUAL "BASIC_PROCESSING")
+        target_compile_definitions(app PRIVATE TM_TEST_BASIC_PROCESSING=1)
+    elseif(TM_TEST STREQUAL "COOPERATIVE_SCHEDULING")
+        target_compile_definitions(app PRIVATE TM_TEST_COOPERATIVE_SCHEDULING=1)
+    elseif(TM_TEST STREQUAL "PREEMPTIVE_SCHEDULING")
+        target_compile_definitions(app PRIVATE TM_TEST_PREEMPTIVE_SCHEDULING=1)
+    elseif(TM_TEST STREQUAL "MESSAGE_PROCESSING")
+        target_compile_definitions(app PRIVATE TM_TEST_MESSAGE_PROCESSING=1)
+    elseif(TM_TEST STREQUAL "SYNCHRONIZATION")
+        target_compile_definitions(app PRIVATE TM_TEST_SYNCHRONIZATION=1)
+    elseif(TM_TEST STREQUAL "MEMORY_ALLOCATION")
+        target_compile_definitions(app PRIVATE TM_TEST_MEMORY_ALLOCATION=1)
+    elseif(TM_TEST STREQUAL "INTERRUPT_PROCESSING")
+        target_compile_definitions(app PRIVATE TM_TEST_INTERRUPT_PROCESSING=1 TM_RUN_INTERRUPT_PROCESSING=1)
+    elseif(TM_TEST STREQUAL "INTERRUPT_PREEMPTION")
+        target_compile_definitions(app PRIVATE TM_TEST_INTERRUPT_PREEMPTION=1 TM_RUN_INTERRUPT_PREEMPTION=1)
+    elseif(TM_TEST)
+        message(WARNING "Unknown TM_TEST value: ${TM_TEST}")
+    endif()
+endif()
 
 target_link_libraries(app
     freertos_kernel

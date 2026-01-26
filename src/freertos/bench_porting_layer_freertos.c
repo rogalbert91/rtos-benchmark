@@ -29,10 +29,14 @@
 
 #define MAX_SEMAPHORES 5
 #define MAX_THREADS 10
-#define STACK_SIZE (configMINIMAL_STACK_SIZE + 200)
+/* Increased stack size for Thread-Metric tests which need more stack space */
+#define STACK_SIZE (configMINIMAL_STACK_SIZE + 512)
 #define MAX_MUTEXES 5
-#define MAX_QUEUES 1
-#define QUEUE_SIZE (1)
+#define MAX_QUEUES 2
+/* Queue item size - Thread-Metric uses 16-byte messages (4 x unsigned long) */
+#define QUEUE_ITEM_SIZE (16)
+/* Queue storage size = max_messages * item_size */
+#define QUEUE_STORAGE_SIZE (10 * QUEUE_ITEM_SIZE)
 
 static SemaphoreHandle_t semaphores[MAX_SEMAPHORES];
 static StaticSemaphore_t semaphore_buffer[MAX_SEMAPHORES];
@@ -52,7 +56,7 @@ static SemaphoreHandle_t to_remove_sem;
 static StaticSemaphore_t to_remove_sem_buf;
 
 static QueueHandle_t queues[MAX_QUEUES];
-static uint8_t queue_storage[MAX_QUEUES][QUEUE_SIZE];
+static uint8_t queue_storage[MAX_QUEUES][QUEUE_STORAGE_SIZE];
 static StaticQueue_t queue_buffer[MAX_QUEUES];
 
 #define benchmark_task_PRIORITY (configMAX_PRIORITIES - 1)
@@ -179,7 +183,6 @@ void bench_thread_set_priority(int priority)
 int bench_thread_create(int thread_id, const char *thread_name, int priority,
 	void (*entry_function)(void *), void *args)
 {
-	BaseType_t ret;
 	TaskHandle_t  handle;
 
 	if (thread_id < 0 || thread_id > MAX_THREADS)
@@ -286,7 +289,14 @@ void bench_collect_resources(void)
 int bench_message_queue_create(int mq_id, const char *mq_name,
 	size_t msg_max_num, size_t msg_max_len)
 {
-	configASSERT(msg_max_len <= QUEUE_SIZE);
+	(void)mq_name;
+
+	if (mq_id < 0 || mq_id >= MAX_QUEUES)
+		return BENCH_ERROR;
+
+	/* Validate that the requested queue fits in our static storage */
+	configASSERT(msg_max_len <= QUEUE_ITEM_SIZE);
+	configASSERT(msg_max_num * msg_max_len <= QUEUE_STORAGE_SIZE);
 
 	queues[mq_id] = xQueueCreateStatic(msg_max_num, msg_max_len,
 		queue_storage[mq_id], &queue_buffer[mq_id]);
@@ -373,4 +383,18 @@ void vApplicationGetTimerTaskMemory(StaticTask_t **ppxTimerTaskTCBBuffer,
 	*ppxTimerTaskTCBBuffer = &xTimerTaskTCBBuffer;
 	*ppxTimerTaskStackBuffer = xTimerStack;
 	*pulTimerTaskStackSize = STACK_SIZE;
+}
+
+/**
+ * @brief Stack overflow hook
+ *
+ * Called by FreeRTOS when a stack overflow is detected.
+ */
+void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
+{
+	(void)xTask;
+	PRINTF("\n*** STACK OVERFLOW in task: %s ***\n", pcTaskName);
+	for (;;) {
+		/* Halt here for debugging */
+	}
 }
