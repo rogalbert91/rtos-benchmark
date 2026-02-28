@@ -28,7 +28,7 @@
 #define THREAD_HIGH     1
 #define THREAD_SPAWN    2
 
-#define MAIN_PRIORITY   (BENCH_LAST_PRIORITY - 2)    /* Priority of main thread in the system */
+#define MAIN_PRIORITY  BENCH_LAST_PRIORITY    /* Priority of main thread in the system */
 
 static bench_time_t helper_start;        /* helper thread start timestamp */
 static bench_time_t helper_end;          /* helper thread end timestamp */
@@ -256,6 +256,7 @@ static void gather_set1_stats(int priority, uint32_t iteration)
 
 	bench_thread_set_priority(priority + 2);
 	bench_thread_set_priority(priority);
+	bench_thread_abort(THREAD_LOW);
 
 #if RTOS_HAS_THREAD_SPAWN
 

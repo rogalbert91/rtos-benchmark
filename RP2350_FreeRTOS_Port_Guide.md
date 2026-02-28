@@ -399,7 +399,7 @@ add_custom_target(flash
 #define configTIMER_QUEUE_LENGTH                10
 #define configTIMER_TASK_STACK_DEPTH            1024
 
-#define INCLUDE_vTaskPrioritySet                1
+#define INCLUDE_vTaskPrioritySet                0
 #define INCLUDE_uxTaskPriorityGet               1
 #define INCLUDE_vTaskDelete                     1
 #define INCLUDE_vTaskSuspend                    1
@@ -1152,7 +1152,7 @@ cmake -DRTOS=freertos -DBOARD=pico2_sdk \
       -DFREERTOS_KERNEL_PATH=$FREERTOS_KERNEL_PATH ..
 ```
 
-**With DWT (experimental):**
+**With DWT:**
 ```bash
 cmake -DRTOS=freertos -DBOARD=pico2_sdk \
       -DUSE_DWT_TIMING=ON \

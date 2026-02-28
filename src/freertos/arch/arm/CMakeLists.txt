@@ -1,6 +1,6 @@
 # Select architecture-specific code based on target
 if(CONFIG_NO_DWT)
-    # RP2350 and other Cortex-M33 without DWT - use SysTick-based timing
+    # Cortex-M33 without DWT - use SysTick-based timing
     add_subdirectory(cortex_m33_systick)
 elseif(CONFIG_CPU_CORTEX_M)
     # FRDM-K64F and other Cortex-M with DWT - use DWT cycle counter

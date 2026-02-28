@@ -91,6 +91,11 @@
 #define INCLUDE_xTaskGetHandle                  0
 #define INCLUDE_xTaskResumeFromISR              1
 
+/* SMP disabled for single core */
+#define configNUMBER_OF_CORES                   1
+#define configUSE_CORE_AFFINITY                 0
+#define portSUPPORT_SMP                         0
+
 #if defined(__ICCARM__)||defined(__CC_ARM)||defined(__GNUC__)
     /* Clock manager provides in this variable system core clock frequency */
     #include <stdint.h>

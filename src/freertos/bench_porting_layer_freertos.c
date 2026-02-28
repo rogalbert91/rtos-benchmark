@@ -59,7 +59,7 @@ static QueueHandle_t queues[MAX_QUEUES];
 static uint8_t queue_storage[MAX_QUEUES][QUEUE_STORAGE_SIZE];
 static StaticQueue_t queue_buffer[MAX_QUEUES];
 
-#define benchmark_task_PRIORITY (configMAX_PRIORITIES - 1)
+#define benchmark_task_PRIORITY (configMAX_PRIORITIES - BENCH_LAST_PRIORITY)
 
 void bench_test_init(void (*test_init_function)(void *))
 {
@@ -177,7 +177,7 @@ static UBaseType_t map_prio(int prio)
 
 void bench_thread_set_priority(int priority)
 {
-	vTaskPrioritySet(NULL, map_prio(priority));
+	// vTaskPrioritySet(NULL, map_prio(priority));
 }
 
 int bench_thread_create(int thread_id, const char *thread_name, int priority,
@@ -256,17 +256,17 @@ int bench_mutex_create(int mutex_id)
 	assert(mutex_id < MAX_MUTEXES);
 
 	mutexes[mutex_id] =
-		xSemaphoreCreateRecursiveMutexStatic(&mutex_buffers[mutex_id]);
+		xSemaphoreCreateMutexStatic(&mutex_buffers[mutex_id]);
 }
 
 int bench_mutex_lock(int mutex_id)
 {
-	xSemaphoreTakeRecursive(mutexes[mutex_id], portMAX_DELAY);
+	xSemaphoreTake(mutexes[mutex_id], portMAX_DELAY);
 }
 
 int bench_mutex_unlock(int mutex_id)
 {
-	xSemaphoreGiveRecursive(mutexes[mutex_id]);
+	xSemaphoreGive(mutexes[mutex_id]);
 }
 
 void bench_sync_ticks(void)

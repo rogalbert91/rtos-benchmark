@@ -23,7 +23,7 @@
 #define THREAD_LOW  0       /* Low priority thread ID */
 #define THREAD_HIGH 1       /* High priority thread ID */
 
-#define MAIN_PRIORITY   (BENCH_LAST_PRIORITY - 3)
+#define MAIN_PRIORITY   BENCH_LAST_PRIORITY
 
 #define TIME_TO_LOCK                0
 #define TIME_TO_UNLOCK              1
@@ -198,6 +198,7 @@ static void gather_unpend_stats(int priority, uint32_t iteration)
 	/* Restore current thread priority */
 
 	bench_thread_set_priority(priority);
+	bench_thread_abort(THREAD_LOW);
 }
 
 /**
@@ -237,14 +238,15 @@ static void bench_pend_low(void *args)
 
 	/* Step 2 */
 
+	PRINTF("Low priority helper thread gave semaphore\n\r");
 	bench_sem_give(SEM_ID);
 
 	/* Step 5 */
 
 	helper_end = bench_timing_counter_get();
 
+	PRINTF("Low priority helper thread gave semaphore again\n\r");
 	bench_sem_give(SEM_ID);    /* Unblock the main thread */
-
 	/* Step 8 - clean up and finish */
 
 	bench_thread_exit();
@@ -256,13 +258,13 @@ static void bench_pend_low(void *args)
 static void bench_pend_high(void *args)
 {
 	/* Step 4 */
-
 	helper_start = bench_timing_counter_get();
-
+	// PRINTF("High priority helper thread locking mutex\n\r");
 	bench_mutex_lock(MUTEX_ID);
 
 	/* Step 7 - clean up and finish */
 
+	// PRINTF("High priority helper thread unlocking mutex\n\r");
 	bench_mutex_unlock(MUTEX_ID);
 	bench_thread_exit();
 }
@@ -296,18 +298,21 @@ static void gather_pend_stats(int priority, uint32_t iteration)
 
 	bench_mutex_lock(MUTEX_ID);
 
+	PRINTF("Main thread creating low priority helper\n\r");
 	bench_thread_create(THREAD_LOW, "thread_low",
 			    priority + 2, bench_pend_low, NULL);
 	bench_thread_start(THREAD_LOW);
 
+	PRINTF("Main thread taking semaphore\n\r");
 	bench_sem_take(SEM_ID);    /* Switch to low priority helper */
-
 	/* Step 3 */
 
+	PRINTF("Main thread creating high priority helper\n\r");
 	bench_thread_create(THREAD_HIGH, "thread_high",
 			    priority + 1, bench_pend_high, NULL);
 	bench_thread_start(THREAD_HIGH);
 
+	PRINTF("Main thread taking semaphore again\n\r");
 	bench_sem_take(SEM_ID);    /* Block so high priority helper runs */
 
 	/* Step 6. */
@@ -316,6 +321,7 @@ static void gather_pend_stats(int priority, uint32_t iteration)
 			   bench_timing_cycles_get(&helper_start, &helper_end),
 			   iteration);
 
+	PRINTF("Main thread unlocking mutex\n\r");
 	bench_mutex_unlock(MUTEX_ID);
 
 	bench_thread_set_priority(priority + 3);
@@ -323,6 +329,8 @@ static void gather_pend_stats(int priority, uint32_t iteration)
 	/* Step 9 */
 
 	bench_thread_set_priority(priority);
+	bench_thread_abort(THREAD_HIGH);
+	bench_thread_abort(THREAD_LOW);
 }
 
 /**
@@ -390,17 +398,17 @@ void bench_mutex_lock_unlock_test(void *arg)
 		gather_lock_unlock_stats(i);
 	}
 
-	bench_mutex_lock(MUTEX_ID);        /* Prep mutex so it is locked */
+	// bench_mutex_lock(MUTEX_ID);        /* Prep mutex so it is locked */
 
-	for (i = 1; i <= ITERATIONS; i++) {
-		gather_recursive_lock_stats(i);
-	}
+	// for (i = 1; i <= ITERATIONS; i++) {
+	// 	gather_recursive_lock_stats(i);
+	// }
 
-	for (i = 1; i <= ITERATIONS; i++) {
-		gather_recursive_unlock_stats(i);
-	}
+	// for (i = 1; i <= ITERATIONS; i++) {
+	// 	gather_recursive_unlock_stats(i);
+	// }
 
-	bench_mutex_unlock(MUTEX_ID);      /* Undo final lock */
+	// bench_mutex_unlock(MUTEX_ID);      /* Undo final lock */
 
 	for (i = 1; i <= ITERATIONS; i++) {
 		gather_unpend_stats(MAIN_PRIORITY, i);
@@ -412,10 +420,10 @@ void bench_mutex_lock_unlock_test(void *arg)
 		bench_collect_resources();
 	}
 
-	for (i = 1; i <= ITERATIONS; i++) {
-		gather_pend_stats(MAIN_PRIORITY, i);
-		bench_collect_resources();
-	}
+	// for (i = 1; i <= ITERATIONS; i++) {
+	// 	gather_pend_stats(MAIN_PRIORITY, i);
+	// 	bench_collect_resources();
+	// }
 
 	for (i = 1; i <= ITERATIONS; i++) {
 		gather_pend_inheritance_stats(MAIN_PRIORITY, i);

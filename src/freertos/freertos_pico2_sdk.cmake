@@ -64,7 +64,6 @@ add_library(freertos_kernel STATIC
     ${FREERTOS_KERNEL_PATH}/event_groups.c
     ${FREERTOS_KERNEL_PATH}/stream_buffer.c
     ${FREERTOS_KERNEL_PATH}/portable/ThirdParty/GCC/RP2040/port.c
-    ${FREERTOS_KERNEL_PATH}/portable/MemMang/heap_4.c
 )
 
 target_include_directories(freertos_kernel PUBLIC
