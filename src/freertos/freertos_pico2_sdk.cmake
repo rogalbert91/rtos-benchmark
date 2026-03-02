@@ -248,3 +248,6 @@ add_custom_target(flash
     COMMAND picotool reboot
     COMMENT "Flashing to RP2350 flash and rebooting..."
 )
+
+target_compile_options(app PRIVATE -mfloat-abi=soft)
+target_compile_options(freertos_kernel PRIVATE -mfloat-abi=soft)

@@ -238,14 +238,12 @@ static void bench_pend_low(void *args)
 
 	/* Step 2 */
 
-	PRINTF("Low priority helper thread gave semaphore\n\r");
 	bench_sem_give(SEM_ID);
 
 	/* Step 5 */
 
 	helper_end = bench_timing_counter_get();
 
-	PRINTF("Low priority helper thread gave semaphore again\n\r");
 	bench_sem_give(SEM_ID);    /* Unblock the main thread */
 	/* Step 8 - clean up and finish */
 
@@ -259,12 +257,10 @@ static void bench_pend_high(void *args)
 {
 	/* Step 4 */
 	helper_start = bench_timing_counter_get();
-	// PRINTF("High priority helper thread locking mutex\n\r");
 	bench_mutex_lock(MUTEX_ID);
 
 	/* Step 7 - clean up and finish */
 
-	// PRINTF("High priority helper thread unlocking mutex\n\r");
 	bench_mutex_unlock(MUTEX_ID);
 	bench_thread_exit();
 }
@@ -298,21 +294,17 @@ static void gather_pend_stats(int priority, uint32_t iteration)
 
 	bench_mutex_lock(MUTEX_ID);
 
-	PRINTF("Main thread creating low priority helper\n\r");
 	bench_thread_create(THREAD_LOW, "thread_low",
 			    priority + 2, bench_pend_low, NULL);
 	bench_thread_start(THREAD_LOW);
 
-	PRINTF("Main thread taking semaphore\n\r");
 	bench_sem_take(SEM_ID);    /* Switch to low priority helper */
 	/* Step 3 */
 
-	PRINTF("Main thread creating high priority helper\n\r");
 	bench_thread_create(THREAD_HIGH, "thread_high",
 			    priority + 1, bench_pend_high, NULL);
 	bench_thread_start(THREAD_HIGH);
 
-	PRINTF("Main thread taking semaphore again\n\r");
 	bench_sem_take(SEM_ID);    /* Block so high priority helper runs */
 
 	/* Step 6. */
@@ -321,7 +313,6 @@ static void gather_pend_stats(int priority, uint32_t iteration)
 			   bench_timing_cycles_get(&helper_start, &helper_end),
 			   iteration);
 
-	PRINTF("Main thread unlocking mutex\n\r");
 	bench_mutex_unlock(MUTEX_ID);
 
 	bench_thread_set_priority(priority + 3);
@@ -420,10 +411,10 @@ void bench_mutex_lock_unlock_test(void *arg)
 		bench_collect_resources();
 	}
 
-	// for (i = 1; i <= ITERATIONS; i++) {
-	// 	gather_pend_stats(MAIN_PRIORITY, i);
-	// 	bench_collect_resources();
-	// }
+	for (i = 1; i <= ITERATIONS; i++) {
+		gather_pend_stats(MAIN_PRIORITY, i);
+		bench_collect_resources();
+	}
 
 	for (i = 1; i <= ITERATIONS; i++) {
 		gather_pend_inheritance_stats(MAIN_PRIORITY, i);

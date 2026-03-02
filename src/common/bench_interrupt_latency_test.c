@@ -15,7 +15,7 @@
 
 #define THREAD_LOW  0
 
-#define MAIN_THREAD_PRIORITY   (BENCH_LAST_PRIORITY - 3)
+#define MAIN_THREAD_PRIORITY   (configMAX_PRIORITIES - BENCH_LAST_PRIORITY)
 
 #define ISR_DELAY  1000     /* Time in microseconds until ISR fires */
 
