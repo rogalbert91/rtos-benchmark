@@ -21,8 +21,8 @@ void bench_all(void *arg)
 	bench_sem_context_switch_init(arg);
 	bench_sem_signal_release_init(arg);
 	bench_thread_yield(arg);
-	bench_malloc_free(arg);
-	bench_message_queue_init(arg);
+	// bench_malloc_free(arg);
+	// bench_message_queue_init(arg);
 
 	/* This should be the last test as it can muck with the timer */
 

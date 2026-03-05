@@ -10,7 +10,7 @@
 #include "bench_api.h"
 #include "bench_utils.h"
 
-#define MAIN_PRIORITY (BENCH_LAST_PRIORITY - 3)
+#define MAIN_PRIORITY (BENCH_LAST_PRIORITY)
 
 static bench_time_t timestamp_start_sema_t_c;
 static bench_time_t timestamp_end_sema_t_c;
